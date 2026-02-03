@@ -1,7 +1,7 @@
 import apiError from '../utils/apiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../model/user.model.js';
-import apiRepsonse from '../utils/apiResponse.js';
+import apiResponse from '../utils/apiResponse.js';
 import { Futsal } from '../model/futsal.model.js';
 import generateTimeSlots from '../utils/availableTimeSlots.js';
 import mongoose from 'mongoose';
@@ -34,7 +34,7 @@ const userLogin = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json(
-        new apiRepsonse(201, "user registered successfully", allFutsalName, true)
+        new apiResponse(201, "user registered successfully", allFutsalName, true)
     )
 })
 
@@ -82,7 +82,7 @@ const selectFutsal = asyncHandler(async (req, res) => {
     const availableSlots = generateTimeSlots(openingTime, closingTime, bookedSlots);
 
     return res.status(200).json(
-        new apiRepsonse(200, "Futsal selected successfully", availableSlots, true)
+        new apiResponse(200, "Futsal selected successfully", availableSlots, true)
     )
 
 })
@@ -113,7 +113,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
     }
 
     const session = await mongoose.startSession();
-    
+
     session.startTransaction();
 
 
@@ -165,7 +165,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
         session.endSession();
 
         return res.status(200).json(
-            new apiRepsonse(200, "Futsal booked successfully", futsal, true)
+            new apiResponse(200, "Futsal booked successfully", futsal, true)
         )
     } catch (error) {
         await session.abortTransaction();
@@ -177,3 +177,5 @@ const bookFutsal = asyncHandler(async (req, res) => {
         throw error;
     }
 })
+
+export {userLogin, selectFutsal, bookFutsal }

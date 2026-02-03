@@ -2,6 +2,10 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
 const futsalSchema = new Schema({
+    role: {
+        type: String,
+        default: 'futsal'
+    },
     name: {
         type: String,
         required: true,
@@ -69,7 +73,6 @@ const futsalSchema = new Schema({
         user: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true
         }
     }],
 
@@ -87,10 +90,28 @@ const futsalSchema = new Schema({
             ref: 'User',
             required: true
         }
-    }]
+    }],
+    refreshToken:{
+        type:String
+    }
 
 }, { timestamps: true });
 
+// refresh token 
+futsalSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+    }
+  )
+}
+
+// ensure subdocument holds unique date and time 
 futsalSchema.index({ "bookedSlots.date": 1, "bookedSlots.time": 1 }, { unique: true })
 
 futsalSchema.pre('save', async function (next) {

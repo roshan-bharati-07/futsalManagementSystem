@@ -1,6 +1,10 @@
 import mongoose, {Schema} from "mongoose";
 
 const userSchema = new Schema({
+    role: {
+        type: String,
+        default: 'user'
+    },
     name: {
         type:String,
         trim:true,

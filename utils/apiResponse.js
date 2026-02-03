@@ -1,4 +1,4 @@
-class apiRepsonse {
+class apiResponse {
     constructor(message, data,statusCode) {
         this.statusCode = statusCode || 200
         this.message = message
@@ -7,4 +7,4 @@ class apiRepsonse {
     }
 }
 
-export default apiRepsonse
+export default apiResponse
