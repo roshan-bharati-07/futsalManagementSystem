@@ -35,7 +35,7 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    advanceBooking: [{
+    advanceBooking:{                   //if want to use array, use $each 
         date: {
             type: String,
             required: true, 
@@ -49,7 +49,7 @@ const userSchema = new Schema({
             ref: 'Futsal',
             required: true
         }
-    }]
+    }
     
 }, {
     timestamps:true

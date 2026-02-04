@@ -6,7 +6,7 @@ import { Futsal } from '../model/futsal.model.js';
 import generateTimeSlots from '../utils/availableTimeSlots.js';
 import mongoose from 'mongoose';
 
-const userLogin = asyncHandler(async (req, res) => {
+const createUserAccount = asyncHandler(async (req, res) => {
     const {
         name,
         phoneNumber,
@@ -178,4 +178,22 @@ const bookFutsal = asyncHandler(async (req, res) => {
     }
 })
 
-export {userLogin, selectFutsal, bookFutsal }
+
+const userLogin = asyncHandler(async(req,res) => {
+    const {
+        phoneNumber 
+    } = req.body 
+
+    if (!phoneNumber ) {
+        throw new apiError(400, "Phone number is required");
+    }
+
+    const user = await User.findOne({ phoneNumber }).select('-_id -__v -createdAt -updatedAt');
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
+    return res.status(200).json(
+        new apiResponse(200, "User logged in successfully", user, true)
+    )
+})
+export {createUserAccount, selectFutsal, bookFutsal, userLogin }

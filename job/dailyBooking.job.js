@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import mongoose from "mongoose";
 import Futsal from "./models/futsal.model.js"; // adjust path
+import User from "./models/user.model.js"; // adjust path
 
 cron.schedule("0 0 * * *", async () => {
   const today = new Date().toISOString().split("T")[0]; 
@@ -16,6 +17,17 @@ cron.schedule("0 0 * * *", async () => {
     }).session(session);
 
     for (const futsal of futsals) {
+
+      // remove old bookedSlots 
+      futsal.bookedSlots = null 
+      
+      // clear the record from old booked users 
+      const user = await User.deleteMany({
+        bookedFutsal: futsal._id,
+        bookedDate: { $lt: today }
+      }, {
+        session
+      })
 
       const todaysAdvance = futsal.advanceBookingSlots.filter(
         slot => slot.date === today

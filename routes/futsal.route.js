@@ -4,7 +4,10 @@ import {
     futsalLogin,
     bookFutsal,
     removeBookedFutsal,
-    getAllDetails
+    getAllDetails,
+    updatePhoto,
+    refreshAccessToken,
+    logoutFutsal
 } from "../controller/futsal.controller.js";
 
 import { authFutsal } from "../middleware/auth.middleware.js";
@@ -16,5 +19,8 @@ router.post("/login", futsalLogin);
 router.post("/book", authFutsal, bookFutsal);
 router.post("/removeBookedFutsal", authFutsal, removeBookedFutsal);
 router.get("/getAllDetails", authFutsal, getAllDetails);
+router.patch("/updatePhoto", authFutsal, upload.single('file'), updatePhoto);
+router.post("/refresh-token", refreshAccessToken);
+router.post("/logout", authFutsal, logoutFutsal);
 
 export default router;
