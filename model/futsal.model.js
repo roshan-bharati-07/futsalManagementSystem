@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const futsalSchema = new Schema({
     role: {
@@ -91,8 +92,15 @@ const futsalSchema = new Schema({
             required: true
         }
     }],
+    accessToken: {
+        type:String
+    },
     refreshToken:{
         type:String
+    },
+    futsalImage: {
+        type: String,
+        default: ""
     }
 
 }, { timestamps: true });
@@ -107,6 +115,19 @@ futsalSchema.methods.generateRefreshToken = function () {
     process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+    }
+  )
+}
+
+adminSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      username: this.username,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY
     }
   )
 }

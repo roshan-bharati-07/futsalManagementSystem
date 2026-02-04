@@ -17,9 +17,9 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        req.admin = decoded;
-        if (req.admin.role !== 'admin') {
-            throw new apiError(403, "Admin is only allowed");
+        req.futsal = decoded;
+        if (req.futsal.role !== 'futsal') {
+            throw new apiError(403, "Futsal is only allowed");
 
         }
         next();
