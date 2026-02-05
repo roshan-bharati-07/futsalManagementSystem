@@ -141,12 +141,16 @@ const futsalLogin = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite:"Strict"
     }
 
-    return res.status(200).cookie('refreshToken', refreshToken, options)
+    return res.status(200).cookie('refreshToken', refreshToken, { ...options, maxAge: 7 * 24 * 60 * 60 * 1000 })
         .cookie('accessToken', accessToken, options).json(
-            new apiResponse(200, "Futsal logged in successfully", true)
+            new apiResponse(200, "Futsal logged in successfully", {
+                accessToken,
+                refreshToken
+            }, true)
         )
 
 })
@@ -181,21 +185,19 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite:"Strict"
         }
 
         const { accessToken, newRefreshToken } = await generateAccessAndRefereshTokens(futsal._id)
 
-        return res.status(200).json(
-            new apiResponse(
-                200,
-                {
+        return res.status(200).cookie('refreshToken', newRefreshToken, { ...options, maxAge: 7 * 24 * 60 * 60 * 1000 })
+            .cookie('accessToken', accessToken, options).json(
+                new apiResponse(200, "New refreshtoken created successfully", {
                     accessToken,
-                    refreshToken: newRefreshToken
-                },
-                "Access token refreshed"
+                    newRefreshToken
+                }, true)
             )
-        );
 
 
     } catch (error) {
@@ -220,7 +222,8 @@ const logoutFutsal = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite:"Strict"
     }
 
     return res
@@ -275,10 +278,13 @@ const bookFutsal = asyncHandler(async (req, res) => {
 
 const removeBookedFutsal = asyncHandler(async (req, res) => {
     const {
-        futsalId,
         date,
         time
     } = req.body;
+
+    const {
+        futsalId
+    } = req.futsal
 
     if (!futsalId || !date || !time) {
         throw new apiError(400, "All fields are required");

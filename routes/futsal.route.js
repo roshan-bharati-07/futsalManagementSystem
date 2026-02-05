@@ -10,6 +10,8 @@ import {
     logoutFutsal
 } from "../controller/futsal.controller.js";
 
+import { createQRcode } from "../controller/qr.controller.js";
+
 import { authFutsal } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 const router = express.Router();
@@ -22,5 +24,6 @@ router.get("/getAllDetails", authFutsal, getAllDetails);
 router.patch("/updatePhoto", authFutsal, upload.single('file'), updatePhoto);
 router.post("/refresh-token", refreshAccessToken);
 router.post("/logout", authFutsal, logoutFutsal);
+router.post("/createQRcode/:username", createQRcode);
 
 export default router;

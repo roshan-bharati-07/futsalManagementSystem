@@ -25,7 +25,6 @@ const authMiddleware = (req, res, next) => {
         next();
     } catch (error) {
         throw new apiError(401, "Unauthorized, token is invalid");
-
     }
 };
 
