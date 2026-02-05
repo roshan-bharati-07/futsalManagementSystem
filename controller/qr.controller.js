@@ -14,7 +14,7 @@ const createQRcode = asyncHandler(async(req,res) => {
         throw new apiError(400, "Futsal username is required");
     }
 
-    const endpoint = `http://localhost:300/${encodeURIComponent(username)}`
+    const endpoint = `http://localhost:300/${encodeURIComponent(username)}`  // replace it with deployed url 
 
     const qrCode = await QRCode.toDataURL(endpoint);
     

@@ -119,7 +119,7 @@ futsalSchema.methods.generateRefreshToken = function () {
   )
 }
 
-adminSchema.methods.generateAccessToken = function () {
+futsalSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,

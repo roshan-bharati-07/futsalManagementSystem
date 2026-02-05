@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import apiError from "../utils/apiError.js";
-const authMiddleware = (req, res, next) => {
+const authMiddleware = (req, _, next) => {
 
     let token = req.cookies?.token
 

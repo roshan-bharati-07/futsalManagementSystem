@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import mongoose from "mongoose";
-import Futsal from "./models/futsal.model.js"; // adjust path
-import User from "./models/user.model.js"; // adjust path
+import {Futsal} from "../model/futsal.model.js"; // adjust path
+import {User} from "../model/user.model.js"; // adjust path
 
 cron.schedule("0 0 * * *", async () => {
   const today = new Date().toISOString().split("T")[0]; 

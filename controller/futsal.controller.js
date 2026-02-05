@@ -3,8 +3,7 @@ import apiError from "../utils/apiError.js";
 import apiResponse from "../utils/apiResponse.js";
 import { Futsal } from "../model/futsal.model.js";
 import jwt from "jsonwebtoken";
-import cloudinary, { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { UploadStream } from "cloudinary";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefereshTokens = async (futsalId) => {
 
@@ -139,6 +138,7 @@ const futsalLogin = asyncHandler(async (req, res) => {
     }
     const { accessToken, refreshToken } = await generateRefreshToken(futsal._id);
 
+     // options imp for security 
     const options = {
         httpOnly: true,
         secure: true,

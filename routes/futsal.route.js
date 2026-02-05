@@ -12,18 +12,18 @@ import {
 
 import { createQRcode } from "../controller/qr.controller.js";
 
-import { authFutsal } from "../middleware/auth.middleware.js";
+import authMiddleware from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 const router = express.Router();
 
 router.post("/register", upload.single('file'), createFutsalAccount);
 router.post("/login", futsalLogin);
-router.post("/book", authFutsal, bookFutsal);
-router.post("/removeBookedFutsal", authFutsal, removeBookedFutsal);
-router.get("/getAllDetails", authFutsal, getAllDetails);
-router.patch("/updatePhoto", authFutsal, upload.single('file'), updatePhoto);
+router.post("/book", authMiddleware, bookFutsal);
+router.post("/removeBookedFutsal", authMiddleware, removeBookedFutsal);
+router.get("/getAllDetails", authMiddleware, getAllDetails);
+router.patch("/updatePhoto", authMiddleware, upload.single('file'), updatePhoto);
 router.post("/refresh-token", refreshAccessToken);
-router.post("/logout", authFutsal, logoutFutsal);
+router.post("/logout", authMiddleware, logoutFutsal);
 router.post("/createQRcode/:username", createQRcode);
 
 export default router;

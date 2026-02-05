@@ -3,7 +3,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../model/user.model.js';
 import apiResponse from '../utils/apiResponse.js';
 import { Futsal } from '../model/futsal.model.js';
-import generateTimeSlots from '../utils/availableTimeSlots.js';
+import {generateTimeSlots} from '../utils/availableTimeSlots.js';
 import mongoose from 'mongoose';
 
 const createUserAccount = asyncHandler(async (req, res) => {
