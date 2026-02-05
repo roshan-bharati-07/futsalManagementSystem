@@ -5,6 +5,9 @@ import apiResponse from '../utils/apiResponse.js';
 import { Futsal } from '../model/futsal.model.js';
 import {generateTimeSlots} from '../utils/availableTimeSlots.js';
 import mongoose from 'mongoose';
+import {
+    to24Hour
+} from '../utils/hour.js';
 
 const createUserAccount = asyncHandler(async (req, res) => {
     const {
@@ -29,7 +32,6 @@ const createUserAccount = asyncHandler(async (req, res) => {
 
     req.session.userId = user._id;
 
-
  // redirect if user came from /bookFutsal
     if (req.session.redirectTo === '/bookFutsal') {
         delete req.session.redirectTo;
@@ -37,7 +39,7 @@ const createUserAccount = asyncHandler(async (req, res) => {
     }
 
     // if normal login
-    const allFutsalName = await Futsal.find();
+    const allFutsalName = await Futsal.find().select('name');
 
     if (!allFutsalName || allFutsalName.length === 0) {
         throw new apiError(404, "No futsal found");
@@ -51,16 +53,16 @@ const createUserAccount = asyncHandler(async (req, res) => {
 
 const selectFutsal = asyncHandler(async (req, res) => {
     const {
-        futsalUserName,
+     futsalId
     } = req.params;
 
-    if (!futsalUserName) {
+    if (!futsalId) {
         throw new apiError(400, "All fields are required");
     }
 
     const isAdvanceBooking = req.body?.isAdvanceBooking || false;
 
-    const futsal = await Futsal.findOne({ userName: futsalUserName });
+    const futsal = await Futsal.findById(futsalId);
 
     if (!futsal) {
         throw new apiError(404, "Futsal not found");
@@ -96,12 +98,12 @@ const selectFutsal = asyncHandler(async (req, res) => {
 const bookFutsal = asyncHandler(async (req, res) => {
     const {
         userId,
-        futsalUserName,
+        futsalId,
         date,
         timeSlot,      // "3PM-4PM",
     } = req.body;
 
-    if (!userId || !futsalUserName || !date || !timeSlot) {
+    if (!userId || !futsalId || !date || !timeSlot) {
         throw new apiError(400, "All fields are required");
     }
 
@@ -109,6 +111,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
 
     const isAdvanceBooking = req.body?.isAdvanceBooking || false;
 
+    // check validation if  isAdvanceBooking = true 
     if (isAdvanceBooking) {
         const todayDate = new Date();
         todayDate.setHours(0, 0, 0, 0);
@@ -140,12 +143,13 @@ const bookFutsal = asyncHandler(async (req, res) => {
 
 
     try {
-        const futsal = await Futsal.findOne({ username: futsalUserName })
+        const futsal = await Futsal.findById(futsalId);
 
         if (!futsal) {
             throw new apiError(400, "Futsal not found ");
         }
 
+        // if isAdvanceBooking = false => adding in bookedSlots 
         if (!isAdvanceBooking) {
             const isAlreadyBooked = futsal.bookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
@@ -156,8 +160,9 @@ const bookFutsal = asyncHandler(async (req, res) => {
 
             futsal.bookedSlots.push({ date: formattedDate, time: timeSlot, user: userId });
 
-        } else {
-
+        }
+        // if isAdvanceBooking = true => adding in advanceBookedSlots
+         else {
             const isAlreadyAdvanceBooked = futsal.advanceBookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
             );
@@ -177,18 +182,26 @@ const bookFutsal = asyncHandler(async (req, res) => {
             throw new apiError(404, "User not found");
         }
 
-        user.bookedDate = formattedDate;
-        user.bookedFutsal = futsal._id;
-        user.bookedTime = timeSlot;
-
+        // adding in advanceBooke Section of user 
+        if(isAdvanceBooking){
+            user.advanceBookedDate = formattedDate;
+            user.advanceBookedFutsal = futsal._id;
+            user.advanceBookedTime = timeSlot;
+        }
+        else {   
+            user.bookedDate = formattedDate;
+            user.bookedFutsal = futsal._id;
+            user.bookedTime = timeSlot;  
+        }
         await user.save({ session });
 
         await session.commitTransaction();
         session.endSession();
 
         return res.status(200).json(
-            new apiResponse(200, "Futsal booked successfully", futsal, true)
+            new apiResponse(200, "Futsal booked successfully", true)
         )
+        
     } catch (error) {
         await session.abortTransaction();
         session.endSession();

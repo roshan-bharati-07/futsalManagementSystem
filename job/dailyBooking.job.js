@@ -14,7 +14,7 @@ cron.schedule("0 0 * * *", async () => {
 
     // getting all the futsals with advance bookings of current date 
     const futsals = await Futsal.find({
-      "advanceBookingSlots.date": today
+      "advanceBookedSlots.date": today
     }).session(session);
 
     // looping through all the futsals 
@@ -32,7 +32,7 @@ cron.schedule("0 0 * * *", async () => {
       })
 
       // gettting the advance bookings of futsal
-      const todaysAdvance = futsal.advanceBookingSlots.filter(
+      const todaysAdvance = futsal.advanceBookedSlots.filter(
         slot => slot.date === today
       );
 
@@ -40,7 +40,7 @@ cron.schedule("0 0 * * *", async () => {
       futsal.bookedSlots.push(...todaysAdvance);
 
       // removing advance bookings when pushed into bookedSlots
-      futsal.advanceBookingSlots = futsal.advanceBookingSlots.filter(
+      futsal.advanceBookedSlots = futsal.advanceBookedSlots.filter(
         slot => slot.date !== today
       );
 

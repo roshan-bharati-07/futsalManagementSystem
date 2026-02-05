@@ -65,11 +65,11 @@ const futsalSchema = new Schema({
     bookedSlots: [{
         date: {
             type: String,
-            required: true,
+            trim:true
         },
         time: {
             type: String,
-            required: true,
+            trim:true
         },
         user: {
             type: Schema.Types.ObjectId,
@@ -80,16 +80,16 @@ const futsalSchema = new Schema({
     advanceBookedSlots: [{
         date: {
             type: String,
-            required: true
+             trim:true
         },
         time: {
             type: String,
-            required: true
+            trim:true
         },
         user: {
             type: Schema.Types.ObjectId,
             ref: 'User',
-            required: true
+            
         }
     }],
     accessToken: {
@@ -123,7 +123,8 @@ futsalSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,
-      username: this.username,
+      username: this.userName,
+      role: this.role
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -132,15 +133,13 @@ futsalSchema.methods.generateAccessToken = function () {
   )
 }
 
-// ensure subdocument holds unique date and time 
-futsalSchema.index({ "bookedSlots.date": 1, "bookedSlots.time": 1 }, { unique: true })
 
-futsalSchema.pre('save', async function (next) {
-    if (this.isModified('password')) {
-        this.password = await bcrypt.hash(this.password, 10);
-    }
-    next();
-})
+futsalSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+
+    this.password = await bcrypt.hash(this.password, 10);
+});
+
 
 futsalSchema.methods.isPasswordMatch = async function (password) {
     return await bcrypt.compare(password, this.password);

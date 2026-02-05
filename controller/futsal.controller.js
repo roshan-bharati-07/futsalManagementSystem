@@ -11,8 +11,8 @@ const generateAccessAndRefereshTokens = async (futsalId) => {
         const futsal = await Futsal.findById(futsalId)
 
         const accessToken = futsal.generateAccessToken()
-
         const refreshToken = futsal.generateRefreshToken()
+
         futsal.refreshToken = refreshToken
 
         await futsal.save({ validateBeforeSave: false })
@@ -49,10 +49,14 @@ const createFutsalAccount = asyncHandler(async (req, res) => {
     }
 
     const file = req.file?.path;        // optional chaining => gives undefined
+    console.log(file)
+
+    let image;
 
     if (file) {
 
-        const image = await uploadOnCloudinary(file);
+        image = await uploadOnCloudinary(file);
+        console.log(image)
 
         if (!image) {
             throw new apiError(500, "Image upload failed");
@@ -70,7 +74,7 @@ const createFutsalAccount = asyncHandler(async (req, res) => {
         email,
         openTime,
         closeTime,
-        futsalImage: image?.url || ""
+        futsalImage: image?.secure_url || ""
     })
 
     if (!futsal) {
@@ -78,13 +82,13 @@ const createFutsalAccount = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new apiResponse(200, "Futsal account created successfully", futsal, true)
+        new apiResponse(200, "Futsal account created successfully", true)
     )
 })
 
 
 const updatePhoto = asyncHandler(async (req, res) => {
-    const { futsalId } = req.futsal;
+    const futsalId = req.futsal._id;
     if (!futsalId) {
         throw new apiError(400, "Futsal ID is required");
     }
@@ -112,7 +116,7 @@ const updatePhoto = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new apiResponse(200, "Futsal image updated successfully", futsal, true)
+        new apiResponse(200, "Futsal image updated successfully", true)
     )
 
 })
@@ -132,17 +136,17 @@ const futsalLogin = asyncHandler(async (req, res) => {
     if (!futsal) {
         throw new apiError(404, "Futsal not found");
     }
-    const isPasswordValid = await futsal.comparePassword(password);
+    const isPasswordValid = await futsal.isPasswordMatch(password);
     if (!isPasswordValid) {
         throw new apiError(401, "Invalid password");
     }
-    const { accessToken, refreshToken } = await generateRefreshToken(futsal._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(futsal._id);
 
-     // options imp for security 
+    // options imp for security 
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"Strict"
+        sameSite: "Strict"
     }
 
     return res.status(200).cookie('refreshToken', refreshToken, { ...options, maxAge: 7 * 24 * 60 * 60 * 1000 })
@@ -186,7 +190,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite:"Strict"
+            sameSite: "Strict"
         }
 
         const { accessToken, newRefreshToken } = await generateAccessAndRefereshTokens(futsal._id)
@@ -223,14 +227,14 @@ const logoutFutsal = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"Strict"
+        sameSite: "Strict"
     }
 
     return res
         .status(200)
         .clearCookie("accessToken", options)
         .clearCookie("refreshToken", options)
-        .json(new apiResponse(200, {}, "Futsal logged Out"));
+        .json(new apiResponse(200, "Futsal logged Out"));
 
 })
 
@@ -241,9 +245,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
         time
     } = req.body
 
-    const {
-        futsalId
-    } = req.futsal;
+    const futsalId = req.futsal._id;
 
     if (!futsalId || !date || !time) {
         throw new apiError(400, "All fields are required");
@@ -271,7 +273,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
     await futsal.save();
 
     return res.status(200).json(
-        new apiResponse(200, "Futsal booked successfully", futsal, true)
+        new apiResponse(200, "Futsal booked successfully", true)
     )
 
 })
@@ -282,9 +284,7 @@ const removeBookedFutsal = asyncHandler(async (req, res) => {
         time
     } = req.body;
 
-    const {
-        futsalId
-    } = req.futsal
+    const futsalId = req.futsal._id;
 
     if (!futsalId || !date || !time) {
         throw new apiError(400, "All fields are required");
@@ -303,15 +303,14 @@ const removeBookedFutsal = asyncHandler(async (req, res) => {
     await futsal.save();
 
     return res.status(200).json(
-        new apiResponse(200, "Booked futsal removed successfully", futsal, true)
+        new apiResponse(200, "Booked futsal removed successfully", true)
     )
 
 })
 
+
 const getAllDetails = asyncHandler(async (req, res) => {
-    const {
-        futsalId
-    } = req.futsal
+    const futsalId = req.futsal._id;
 
     if (!futsalId) {
         throw new apiError(400, "Futsal ID is required");

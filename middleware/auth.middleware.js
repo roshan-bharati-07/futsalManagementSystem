@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 import apiError from "../utils/apiError.js";
 const authMiddleware = (req, _, next) => {
 
@@ -16,7 +16,10 @@ const authMiddleware = (req, _, next) => {
     }
 
     try {
+
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        console.log("DECODED")
+        console.log(decoded)
         req.futsal = decoded;
         if (req.futsal.role !== 'futsal') {
             throw new apiError(403, "Futsal is only allowed");
