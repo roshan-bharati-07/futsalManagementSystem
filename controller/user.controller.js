@@ -3,11 +3,12 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../model/user.model.js';
 import apiResponse from '../utils/apiResponse.js';
 import { Futsal } from '../model/futsal.model.js';
-import {generateTimeSlots} from '../utils/availableTimeSlots.js';
+import { generateTimeSlots } from '../utils/availableTimeSlots.js';
 import mongoose from 'mongoose';
 import {
     to24Hour
 } from '../utils/hour.js';
+import { findTommorowAndAfterDate } from '../utils/date.js';
 
 const createUserAccount = asyncHandler(async (req, res) => {
     const {
@@ -32,7 +33,10 @@ const createUserAccount = asyncHandler(async (req, res) => {
 
     req.session.userId = user._id;
 
- // redirect if user came from /bookFutsal
+    console.log("request session controller")
+    console.log(req.session.userId)
+
+    // redirect if user came from /bookFutsal
     if (req.session.redirectTo === '/bookFutsal') {
         delete req.session.redirectTo;
         return res.redirect('/bookFutsal');
@@ -45,15 +49,16 @@ const createUserAccount = asyncHandler(async (req, res) => {
         throw new apiError(404, "No futsal found");
     }
 
+
     return res.status(201).json(
-        new apiResponse(201, "user registered successfully", allFutsalName, true)
+        new apiResponse(201, "user registered successfully", { allFutsalName, userId: user._id }, true)
     )
 })
 
 
 const selectFutsal = asyncHandler(async (req, res) => {
     const {
-     futsalId
+        futsalId
     } = req.params;
 
     if (!futsalId) {
@@ -89,47 +94,62 @@ const selectFutsal = asyncHandler(async (req, res) => {
 
     const availableSlots = generateTimeSlots(openingTime, closingTime, bookedSlots);
 
+    futsal.availableSlots = availableSlots
+
+    await futsal.save();
+
+
     return res.status(200).json(
-        new apiResponse(200, "Futsal selected successfully", availableSlots, true)
+        new apiResponse(200, "Futsal selected successfully", availableSlots)
     )
 
 })
 
 const bookFutsal = asyncHandler(async (req, res) => {
+
     const {
         userId,
-        futsalId,
-        date,
-        timeSlot,      // "3PM-4PM",
-    } = req.body;
+        futsalId
+    } = req?.params
 
-    if (!userId || !futsalId || !date || !timeSlot) {
+    if (!userId || !futsalId) {
+        throw new apiError(400, "All Ids are required");
+    }
+
+    const {
+        inputDate,
+        timeSlot,
+        isAdvanceBooking
+    } = req?.query
+
+    console.log("inputDate", inputDate)
+    console.log("timeSlot", timeSlot)
+    console.log("isAdvanceBooking", isAdvanceBooking)
+
+    if (!userId || !futsalId || !inputDate || !timeSlot) {
         throw new apiError(400, "All fields are required");
     }
 
-    const formattedDate = date.toISOString().split("T")[0];
+       // user send date
+    const date = new Date(inputDate);
+    if (isNaN(date.getTime())) {
+        throw new Error("Invalid date format");
+    }
+    const formattedDate = date.toISOString().split("T")[0];    // to check this 
 
-    const isAdvanceBooking = req.body?.isAdvanceBooking || false;
+    // tomorrow and after date
+     const {
+        todayDate,
+        tommorowDate,
+        afterTommorowDate
+     } = findTommorowAndAfterDate();
 
-    // check validation if  isAdvanceBooking = true 
-    if (isAdvanceBooking) {
-        const todayDate = new Date();
-        todayDate.setHours(0, 0, 0, 0);
+    // check validation if isAdvanceBooking = true 
+    if (isAdvanceBooking === "true") {
 
-        const today = todayDate.toISOString().split("T")[0];
+        const allowed = [tommorowDate, afterTommorowDate];
 
-        const tomorrowDate = new Date(todayDate);
-        tomorrowDate.setDate(todayDate.getDate() + 1);
-        const tomorrow = tomorrowDate.toISOString().split("T")[0];
-
-        const dayAfterTomorrowDate = new Date(todayDate);
-        dayAfterTomorrowDate.setDate(todayDate.getDate() + 2);
-        const dayAfterTomorrow = dayAfterTomorrowDate.toISOString().split("T")[0];
-
-        if (
-            formattedDate <= today ||
-            (formattedDate !== tomorrow && formattedDate !== dayAfterTomorrow)
-        ) {
+        if (!allowed.includes(formattedDate)) {
             throw new apiError(
                 400,
                 "Booking is allowed only for the next two days.neither did today"
@@ -149,11 +169,21 @@ const bookFutsal = asyncHandler(async (req, res) => {
             throw new apiError(400, "Futsal not found ");
         }
 
+        if (!futsal.availableSlots.includes(timeSlot)) {
+            throw new apiError(400, "This time slot is not available");
+        }
+
         // if isAdvanceBooking = false => adding in bookedSlots 
         if (!isAdvanceBooking) {
+
+            if (formattedDate != todayDate) {
+                throw new apiError(400, "Booking is allowed only for the next two days");
+            }
+
             const isAlreadyBooked = futsal.bookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
             );
+
             if (isAlreadyBooked) {
                 throw new apiError(400, "This time slot is already booked");
             }
@@ -162,7 +192,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
 
         }
         // if isAdvanceBooking = true => adding in advanceBookedSlots
-         else {
+        else {
             const isAlreadyAdvanceBooked = futsal.advanceBookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
             );
@@ -183,15 +213,15 @@ const bookFutsal = asyncHandler(async (req, res) => {
         }
 
         // adding in advanceBooke Section of user 
-        if(isAdvanceBooking){
+        if (isAdvanceBooking) {
             user.advanceBookedDate = formattedDate;
             user.advanceBookedFutsal = futsal._id;
             user.advanceBookedTime = timeSlot;
         }
-        else {   
+        else {
             user.bookedDate = formattedDate;
             user.bookedFutsal = futsal._id;
-            user.bookedTime = timeSlot;  
+            user.bookedTime = timeSlot;
         }
         await user.save({ session });
 
@@ -201,13 +231,13 @@ const bookFutsal = asyncHandler(async (req, res) => {
         return res.status(200).json(
             new apiResponse(200, "Futsal booked successfully", true)
         )
-        
+
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
         if (!(error instanceof apiError)) {
             //  for checking 
-            throw new apiError(500, err.message || "Something went wrong");
+            throw new apiError(500, error.message || "Something went wrong");
         }
         throw error;
     }

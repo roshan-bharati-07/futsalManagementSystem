@@ -70,6 +70,14 @@ return res.status(200).json(
 )
 })
 
+app.get("/test", async (req, res) => {
+    const user = await User.find();
+    const futsal = await Futsal.find();
+    return res.status(200).json(
+        new apiResponse(200, "User fetched successfully", {user,futsal}, true)
+    )
+})
+
 
 
 

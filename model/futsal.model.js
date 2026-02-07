@@ -92,6 +92,10 @@ const futsalSchema = new Schema({
             
         }
     }],
+
+    availableSlots: [{
+        type:String
+    }],
     accessToken: {
         type:String
     },
