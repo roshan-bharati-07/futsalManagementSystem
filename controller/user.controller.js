@@ -122,6 +122,8 @@ const bookFutsal = asyncHandler(async (req, res) => {
         isAdvanceBooking
     } = req?.query
 
+    const inputHour = timeSlot.split("-")[0].trim();
+
     console.log("inputDate", inputDate)
     console.log("timeSlot", timeSlot)
     console.log("isAdvanceBooking", isAdvanceBooking)
@@ -130,7 +132,13 @@ const bookFutsal = asyncHandler(async (req, res) => {
         throw new apiError(400, "All fields are required");
     }
 
-       // user send date
+    const validation = ["true", "false"];
+
+    if (!validation.includes(isAdvanceBooking)) {
+        throw new apiError(400, "Invalid isAdvanceBooking value");
+    }
+
+    // user send date
     const date = new Date(inputDate);
     if (isNaN(date.getTime())) {
         throw new Error("Invalid date format");
@@ -138,11 +146,13 @@ const bookFutsal = asyncHandler(async (req, res) => {
     const formattedDate = date.toISOString().split("T")[0];    // to check this 
 
     // tomorrow and after date
-     const {
+    const {
         todayDate,
         tommorowDate,
-        afterTommorowDate
-     } = findTommorowAndAfterDate();
+        afterTommorowDate,
+        currentHour
+    } = findTommorowAndAfterDate();
+
 
     // check validation if isAdvanceBooking = true 
     if (isAdvanceBooking === "true") {
@@ -169,16 +179,25 @@ const bookFutsal = asyncHandler(async (req, res) => {
             throw new apiError(400, "Futsal not found ");
         }
 
-        if (!futsal.availableSlots.includes(timeSlot)) {
-            throw new apiError(400, "This time slot is not available");
-        }
-
         // if isAdvanceBooking = false => adding in bookedSlots 
-        if (!isAdvanceBooking) {
+        if (isAdvanceBooking === "false") {
+            
+            console.log("ajha lai booking")
+
+            if (currentHour != inputHour) {
+                throw new apiError(400, "Invalid time slot");
+            }
+
 
             if (formattedDate != todayDate) {
-                throw new apiError(400, "Booking is allowed only for the next two days");
+                throw new apiError(400, "invalid Booking date");
             }
+
+
+            if (!futsal.availableSlots.includes(timeSlot)) {
+                throw new apiError(400, "This time slot is not available");
+            }
+
 
             const isAlreadyBooked = futsal.bookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
@@ -193,6 +212,7 @@ const bookFutsal = asyncHandler(async (req, res) => {
         }
         // if isAdvanceBooking = true => adding in advanceBookedSlots
         else {
+            console.log("advance booking garya")
             const isAlreadyAdvanceBooked = futsal.advanceBookedSlots.some(
                 slot => slot.date === formattedDate && slot.time === timeSlot
             );
@@ -212,11 +232,14 @@ const bookFutsal = asyncHandler(async (req, res) => {
             throw new apiError(404, "User not found");
         }
 
+        console.log("user ma update hunxa yeta bata ")
+
+
         // adding in advanceBooke Section of user 
-        if (isAdvanceBooking) {
-            user.advanceBookedDate = formattedDate;
-            user.advanceBookedFutsal = futsal._id;
-            user.advanceBookedTime = timeSlot;
+        if (isAdvanceBooking === "true") {
+            user.advanceBooking.date= formattedDate;
+            user.advanceBooking.futsalId = futsal._id;
+            user.advanceBooking.time= timeSlot;
         }
         else {
             user.bookedDate = formattedDate;
@@ -224,6 +247,10 @@ const bookFutsal = asyncHandler(async (req, res) => {
             user.bookedTime = timeSlot;
         }
         await user.save({ session });
+
+        // now update the available slot 
+        futsal.availableSlots = futsal.availableSlots.filter(slot => slot !== timeSlot);
+        await futsal.save({ session });
 
         await session.commitTransaction();
         session.endSession();

@@ -39,7 +39,7 @@ const userSchema = new Schema({
         time: {
             type: String,
         },
-        futsalName: {
+        futsalId: {
             type: Schema.Types.ObjectId,
             ref: 'Futsal',
         }

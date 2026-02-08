@@ -48,9 +48,9 @@ cron.schedule("0 0 * * *", async () => {
       for (const slot of todaysAdvance) {
         const user = await User.findById(slot.user);
         if (user) {
-          user.bookedFutsal = futsal._id;
-          user.bookedDate = today;
-          user.bookedTime = slot.time
+          user.bookedFutsal = user.advanceBooking.futsalId;
+          user.bookedDate = user.advanceBooking.date;
+          user.bookedTime = user.advanceBooking.time;
           await user.save({ session });
         }
       }

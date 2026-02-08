@@ -24,6 +24,6 @@ router.get("/getAllDetails", authMiddleware, getAllDetails);
 router.patch("/updatePhoto", authMiddleware, upload.single('file'), updatePhoto);
 router.post("/refresh-token", refreshAccessToken);
 router.post("/logout", authMiddleware, logoutFutsal);
-router.post("/createQRcode/:username", createQRcode);
+router.post("/createQRcode/:futsalId", createQRcode);
 
 export default router;

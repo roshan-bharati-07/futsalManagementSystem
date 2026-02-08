@@ -7,14 +7,17 @@ import apiResponse from "../utils/apiResponse.js";
 const createQRcode = asyncHandler(async(req,res) => {
 
     const {
-        futsalUsername
+        futsalId
     } = req.params
 
-    if (!futsalUsername ) {
+    console.log(futsalId)
+
+    if (!futsalId ) {
         throw new apiError(400, "Futsal username is required");
     }
 
-    const endpoint = `http://localhost:300/${encodeURIComponent(username)}`  // replace it with deployed url 
+    // const endpoint = `http://localhost:300/${encodeURIComponent(futsalId)}`  // replace it with deployed url 
+    const endpoint = `https://caron-noncomical-unmelancholically.ngrok-free.dev/user/selectFutsal/${encodeURIComponent(futsalId)}`  // replace it with deployed url 
 
     const qrCode = await QRCode.toDataURL(endpoint);
     
